@@ -16,7 +16,6 @@ def ldaLearn(X,y):
     # Outputs
     # means - A d x k matrix containing learnt means for each of the k classes
     # covmat - A single d x d learnt covariance matrix 
-    
 
     k = (np.unique(y))
     n = len(k)
