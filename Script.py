@@ -57,7 +57,7 @@ def qdaLearn(X,y):
         dataframe = pd.DataFrame(values)
         mean[:, i-1] = dataframe.mean(axis=0)
         covmats.append(np.cov(values.T))
-    #print (mean)
+    print (mean)
     return means,covmats
 
 def ldaTest(means,covmat,Xtest,ytest):
@@ -104,15 +104,18 @@ def qdaTest(means,covmats,Xtest,ytest):
     # acc - A scalar accuracy value
     # ypred - N x 1 column vector indicating the predicted labels
 
-    #IMPLEMENT THIS METHOD
+    # IMPLEMENT THIS METHOD
     N = len(Xtest)
     b = len(means[0])
     c = len(ytest)
     shape_ypred = (N,1)
-    #ypred = np.empty(shape_ypred)
-    ypred=np.zeros((len(Xtest)))
+    ypred = np.empty(shape_ypred)
     shape_test_qda = (b,1)
     test_qda = np.empty(shape_test_qda)
+    shape_test_pdf = (b,1)
+    test_pdf = np.empty(shape_test_pdf)
+    #test_qda = []
+    covmat_array = np.array(covmats)
     sigmaI = np.matrix(covmat).I
     meansT = means.T
     i = 0
@@ -122,46 +125,18 @@ def qdaTest(means,covmats,Xtest,ytest):
         j = 0
         while j < b:
             first = Xtest[i] - meansT[j]
-            test_pdf = np.exp((-1/2)*np.dot(first.T,(np.dot(sigmaI,first).T)))
+            a = np.dot(first.T,(np.linalg.inv(covmat_array[j])))
+            test_pdf[j] = np.exp((-1/2)*np.dot(a,first))
             sigmaD = np.sqrt(np.linalg.det(covmats[j]))
-            test_qda[j] = test_pdf/sigmaD
+            test_qda[j] = test_pdf[j]/sigmaD
             j = j + 1
         label = np.argmax(test_qda)
         ypred[i] = label + 1
-        ypred = ypred.reshape(Xtest.shape[0],1)
         if (ypred[i] != ytest[i]):
             incorrect = incorrect + 1
         i = i + 1
     acc = ((N - incorrect)/N)*100
-    ypred[36] = 2
-    ypred[42] = 2
-    ypred[43] = 4
-    print (ypred)
     return acc,ypred
-    
-    
-#    ypred=np.zeros((len(Xtest)))
-#     pred = np.zeros((len(means.T)), dtype=np.ndarray)
-
-#     i = 0
-#     count = 0
-
-#     for x in Xtest:
-#         #for mean in means.T:
-#         for j in range (0,len(means.T)):
-#             mean = means.T[j]
-#             covmat = covmats[j]
-#             x_sub_mu = np.subtract(x, mean)
-#             cov_inv = np.linalg.inv(covmat)
-#             cov_det = np.linalg.det(covmat)
-#             pred[j] = np.exp(-0.5 * np.dot(np.dot(x_sub_mu,cov_inv).T,x_sub_mu)) / np.power(cov_det,0.5)
-#         ypred[i] = np.argmax(pred) + 1
-#         if ypred[i] == ytest[i][0]:
-#             count = count + 1
-#         i = i + 1
-#     acc = (count/len(ytest)) * 100
-    #print(ypred)
-    #return acc,ypred
 
 def learnOLERegression(X,y):
     # Inputs:                                                         
@@ -243,11 +218,11 @@ def mapNonLinear(x,p):
 	
     # IMPLEMENT THIS METHOD
     #N = len(x)
-    N = x.shape[0]
-    Xp = np.ones((N, p+1))
+    N = len(x)
+    mapl = np.ones((N, p+1))
     for i in range(1, p+1):
-        Xp[:, i] = np.power(x,i)
-    return Xp
+        mapl[:, i] = pow(x,i)
+    return mapl
 
 
 # Main script
@@ -262,11 +237,11 @@ else:
 # LDA
 means,covmat = ldaLearn(X,y)
 ldaacc,ldares = ldaTest(means,covmat,Xtest,ytest)
-#print('LDA Accuracy = '+str(ldaacc))
+print('LDA Accuracy = '+str(ldaacc))
 # QDA
 means,covmats = qdaLearn(X,y)
 qdaacc,qdares = qdaTest(means,covmats,Xtest,ytest)
-#print('QDA Accuracy = '+str(qdaacc))
+print('QDA Accuracy = '+str(qdaacc))
 
 #plotting boundaries
 x1 = np.linspace(-5,20,100)
@@ -287,19 +262,16 @@ plt.title('LDA')
 plt.subplot(1, 2, 2)
 
 zacc,zqdares = qdaTest(means,covmats,xx,np.zeros((xx.shape[0],1)))
-#print("Mean: ", means)
-#print("Covmats: ", covmats)
-#print("XX: ", xx)
 plt.contourf(x1,x2,zqdares.reshape((x1.shape[0],x2.shape[0])),alpha=0.3)
 plt.scatter(Xtest[:,0],Xtest[:,1],c=ytest.flatten())
 plt.title('QDA')
 
 plt.show()
-# # Problem 2
+# Problem 2
 if sys.version_info.major == 2:
-     X,y,Xtest,ytest = pickle.load(open('diabetes.pickle','rb'))
+    X,y,Xtest,ytest = pickle.load(open('diabetes.pickle','rb'))
 else:
-     X,y,Xtest,ytest = pickle.load(open('diabetes.pickle','rb'),encoding = 'latin1')
+    X,y,Xtest,ytest = pickle.load(open('diabetes.pickle','rb'),encoding = 'latin1')
 
 # add intercept
 X_i = np.concatenate((np.ones((X.shape[0],1)), X), axis=1)
@@ -307,19 +279,14 @@ Xtest_i = np.concatenate((np.ones((Xtest.shape[0],1)), Xtest), axis=1)
 
 w = learnOLERegression(X,y)
 mle = testOLERegression(w,Xtest,ytest)
-mlet = testOLERegression(w, X, y)
 
 w_i = learnOLERegression(X_i,y)
 mle_i = testOLERegression(w_i,Xtest_i,ytest)
-mlet_i = testOLERegression(w_i,X_i,y)
-
-print('MSE without intercept for training data '+str(mlet))
-print('MSE with intercept for training data '+str(mlet_i))
 
 print('MSE without intercept '+str(mle))
 print('MSE with intercept '+str(mle_i))
 
-# # Problem 3
+# Problem 3
 k = 101
 lambdas = np.linspace(0, 1, num=k)
 i = 0
