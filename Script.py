@@ -57,7 +57,7 @@ def qdaLearn(X,y):
         dataframe = pd.DataFrame(values)
         mean[:, i-1] = dataframe.mean(axis=0)
         covmats.append(np.cov(values.T))
-    print (mean)
+    #print (mean)
     return means,covmats
 
 def ldaTest(means,covmat,Xtest,ytest):
@@ -281,6 +281,7 @@ w = learnOLERegression(X,y)
 mle = testOLERegression(w,Xtest,ytest)
 
 w_i = learnOLERegression(X_i,y)
+#print(w_i) - Get the weight vector for OLER
 mle_i = testOLERegression(w_i,Xtest_i,ytest)
 
 print('MSE without intercept '+str(mle))
@@ -293,10 +294,12 @@ i = 0
 mses3_train = np.zeros((k,1))
 mses3 = np.zeros((k,1))
 for lambd in lambdas:
+    #lambd=0.06 #- This is to compare the weight vector graphs for Linear and Ridge Regression
     w_l = learnRidgeRegression(X_i,y,lambd)
     mses3_train[i] = testOLERegression(w_l,X_i,y)
     mses3[i] = testOLERegression(w_l,Xtest_i,ytest)
     i = i + 1
+    #print("Lambda = {}     MSE Train = {}     MSE Test = {}" . format(lambd, mses3_train[i], mses3[i]));
 fig = plt.figure(figsize=[12,6])
 plt.subplot(1, 2, 1)
 plt.plot(lambdas,mses3_train)
@@ -304,7 +307,7 @@ plt.title('MSE for Train Data')
 plt.subplot(1, 2, 2)
 plt.plot(lambdas,mses3)
 plt.title('MSE for Test Data')
-
+#print(w_l)
 plt.show()
 
 # Problem 4
@@ -322,7 +325,8 @@ for lambd in lambdas:
     w_l = np.reshape(w_l,[len(w_l),1])
     mses4_train[i] = testOLERegression(w_l,X_i,y)
     mses4[i] = testOLERegression(w_l,Xtest_i,ytest)
-    i = i + 1
+    #print("{}     MSETrain = {}     MSETest = {}" . format(lambd, mses4_train[i], mses4[i]));
+    i = i + 1    
 fig = plt.figure(figsize=[12,6])
 plt.subplot(1, 2, 1)
 plt.plot(lambdas,mses4_train)
